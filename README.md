@@ -11,7 +11,8 @@ Different Software and Smartphone Apps use information provided by files in diff
 While transfering, synchronizing, tagging and processing/editing picture files, the mentioned timestamps are often changed, updated or deleted. 
 
 EXIFDateTimeAdjust is a python script that analyzes all JPG-files in one folder (provided as parameter) and corrects timestamps if necessary.
-The script is based on pyexiv2 and was testet under Windows 7 x64
+
+The script is based on pyexiv2 and was tested under Windows 7 (x64) + python2.7
  
 
  

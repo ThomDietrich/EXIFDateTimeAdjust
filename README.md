@@ -1,8 +1,6 @@
 EXIFDateTimeAdjust
 ==================
 
-Synchronizes three timestamps of a JPG: EXIF DateTime property, Filename, File Creation Date
-
 With JPG-files (as with many other files) there are multiple places where a date information is stored:
   - the EXIF metadata "Date/Time Original"
   - the filename (e.g. "IMG_20141231_123559.jpg")

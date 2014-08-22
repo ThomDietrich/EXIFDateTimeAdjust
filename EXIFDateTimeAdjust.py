@@ -10,11 +10,14 @@
 
 import os
 import sys
-import shutil
-import getopt
-import re
 import pyexiv2
 import datetime
+import win32file
+import win32con
+from datetime import timedelta, datetime, tzinfo
+from colorama import Fore, Back, Style
+from colorama import init as coloramainit
+coloramainit()
 
 def getJpgFiles(path):
 	files = []
@@ -26,92 +29,123 @@ def getJpgFiles(path):
 				files.append(filepath)
 	return files
 
+
 def getDatetimeExif(filepath):
 	metadata = pyexiv2.ImageMetadata(filepath)
 	metadata.read()
 	#print metadata.exif_keys
-	
 	try:
 		tag = metadata['Exif.Photo.DateTimeOriginal']
-		#print tag.value
 		return tag.value 
 	except KeyError as e:
 		#print "Error (Exif.Photo.DateTimeOriginal) " + str(e)
 		return 0
-	#try:
-	#	tag = metadata['Exif.Image.DateTime']
-	#	print tag.value
-	#except KeyError as e:
-	#	print "Error (Exif.Image.DateTime) " + str(e)
-	#print type(tag.value)	
-	#print tag.raw_value
-	#print tag.value
-	#print tag.value.strftime('%A %d %B %Y, %H:%M:%S')
 
-def getDatetimeFile(filepath):
+
+def getDatetimeFileCreated(filepath):
 	t = os.path.getctime(filepath)
-	t = datetime.datetime.fromtimestamp(t)
+	t = datetime.fromtimestamp(t)
 	t = t.replace(microsecond = 0)
 	return t
+
 	
+def setDatetimeFileCMA(filepath, timestamp):
+	#we need to correct summer saving time
+	d = datetime(timestamp.year, 4, 1)   # DST starts last Sunday in March
+	dstOn = d - timedelta(days=d.weekday() + 1) 
+	d = datetime(timestamp.year, 11, 1) # DST ends last Sunday in October
+	dstOff = d - timedelta(days=d.weekday() + 1)
+	if (dstOn <=  timestamp.replace(tzinfo=None) < dstOff):
+		#timestamp inside summer saving time
+		#print timedelta(hours=1)
+		pass
+	else:
+		#print timedelta(0)
+		timestamp = timestamp + timedelta(hours=1)
+
+	handle = win32file.CreateFile(filepath, win32con.GENERIC_WRITE, 0, None, win32con.OPEN_EXISTING, 0, None)
+	win32file.SetFileTime(handle, timestamp, timestamp, timestamp)
+	handle.close()
+
+
 def getDatetimeFilename(filepath):
 	filename = os.path.splitext(os.path.basename(filepath))[0].lower()
 	try:
 		# 2014-01-01_00.33.46(.jpg)
-		t = datetime.datetime.strptime(filename, "%Y-%m-%d_%H.%M.%S")
+		t = datetime.strptime(filename, "%Y-%m-%d_%H.%M.%S")
 	except ValueError:
 		try:
 			# IMG_20140101_003346(.jpg)
-			t = datetime.datetime.strptime(filename, "IMG_%Y%m%d_%H%M%S")
+			t = datetime.strptime(filename, "IMG_%Y%m%d_%H%M%S")
 		except ValueError:
 			return 0
 	return t
 
-path = sys.argv[1]
-if not os.path.exists(path):
-	path = 'D:\\Test' #ersetzen
-path = os.path.abspath(path.rstrip('\\'))
 
-print path
+if (len(sys.argv) != 2 or not os.path.exists(sys.argv[1])):
+	print "parameter missing!"
+	print "this script takes one path to a folder with JPGs as command line parameter"
+	print ""
+	print "https://github.com/ThomDietrich/EXIFDateTimeAdjust"
+	sys.exit()
+path = os.path.abspath(sys.argv[1].rstrip('\\'))
+
+
 for file in getJpgFiles(path):
-	print "\n" + "="*50
+	print Style.BRIGHT + "\n" + "-"*50 + Style.RESET_ALL
 	print file
 	
 	datetimeExif = getDatetimeExif(file)
-	datetimeFile = getDatetimeFile(file)
+	datetimeFileCreated = getDatetimeFileCreated(file)
 	datetimeFilename = getDatetimeFilename(file)
 	print "EXIF:\t\t" + str(datetimeExif)
-	print "FileCreate:\t" + str(datetimeFile)
+	print "FileCreate:\t" + str(datetimeFileCreated)
 	print "Filename:\t" + str(datetimeFilename)
-	print ""
+	
+	print "continue?",
+	raw_input()
 	
 	if (datetimeExif and datetimeFilename):
+		print "--> elected:\t" + str(datetimeExif)
 		if (datetimeExif == datetimeFilename):
-			if (datetimeExif == datetimeFile):
-				print "case 0: EXIF Photo.DateTimeOriginal, filename timestamp and file creation date match"
-				print "nothing to do here."
+			if (datetimeExif == datetimeFileCreated):
+				#print "case 0: EXIF Photo.DateTimeOriginal, filename timestamp and file creation date match"
+				print Fore.GREEN + "nothing to do here." + Style.RESET_ALL
 			else: 
 				print "case 1: EXIF Photo.DateTimeOriginal and filename timestamp match"
 				print "correcting file creation date..."
+				setDatetimeFileCMA(file, datetimeExif)
 		else:
 			print "case 2: EXIF Photo.DateTimeOriginal and filename timestamp are different"
-			print "manual correction needed!"
+			print Fore.RED + "manual correction needed!" + Style.RESET_ALL
 	
 	elif (datetimeExif and not datetimeFilename):
-		if (datetimeExif == datetimeFile):
+		print "--> elected:\t" + str(datetimeExif)
+		if (datetimeExif == datetimeFileCreated):
 			print "case 3: EXIF Photo.DateTimeOriginal and file creation date match"
 			print "correcting filename timestamp..."
+			print Fore.YELLOW + "--TODO--" + Style.RESET_ALL
 		else:
 			print "case 4: EXIF Photo.DateTimeOriginal found"
 			print "correcting filename timestamp..."
 			print "correcting file creation date..."
+			print Fore.YELLOW + "--TODO--" + Style.RESET_ALL
 	elif (not datetimeExif and datetimeFilename):
-		if (datetimeFilename == datetimeFile):
+		print "--> elected:\t" + str(datetimeFilename)
+		if (datetimeFilename == datetimeFileCreated):
 			print "case 5: filename timestamp and file creation date match"
 			print "correction EXIF Photo.DateTimeOriginal..."
+			print Fore.YELLOW + "--TODO--" + Style.RESET_ALL
 		else:
 			print "case 6: filename timestamp found"
 			print "correction EXIF Photo.DateTimeOriginal..."
 			print "correcting file creation date..."
+			print Fore.YELLOW + "--TODO--" + Style.RESET_ALL
+	
 	else:
-		print "no clue... try yourself"
+		print Fore.RED + "no clue... try yourself" + Style.RESET_ALL
+		print "(go set the filename, than tickle me again)"
+
+
+
+

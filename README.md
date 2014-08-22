@@ -6,9 +6,9 @@ With JPG-files (as with many other files) there are multiple places where a date
   - the filename (e.g. "IMG_20141231_123559.jpg")
   - the file creation date
 
-The goal is to find the actual capturing date of a photo and to set all other timestamps acordingly.
-Different Software and Smartphone Apps use information provided by files in different ways. Ordering is done by name, creation date or metadata info.
-While transfering, synchronizing, tagging and processing/editing picture files, the mentioned timestamps are often changed, updated or deleted. 
+Different Software and Smartphone Apps use date information provided by files in different ways. Ordering is done by either filename, creation date or metadata info.
+In the process of transfering, synchronizing, tagging and processing/editing picture files, the mentioned timestamps are often changed, updated or deleted. 
+The goal of this project is to find the actual capturing date of a photo and to adjust all other date-time sources acordingly.
 
 EXIFDateTimeAdjust is a python script that analyzes all JPG-files in one folder (provided as parameter) and corrects timestamps if necessary.
 

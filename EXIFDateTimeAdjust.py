@@ -10,6 +10,7 @@
 
 import os
 import sys
+import shutil
 import pyexiv2
 import datetime
 import win32file
@@ -82,6 +83,20 @@ def getDatetimeFilename(filepath):
 	return t
 
 
+def renameFileDatetime(filepath, timestamp):
+	timestampString = timestamp.strftime("%Y-%m-%d_%H.%M.%S")
+	path = os.path.dirname(filepath)
+	filename = os.path.splitext(os.path.basename(filepath))[0]
+	ext = os.path.splitext(os.path.basename(filepath))[1][1:].strip().lower()
+	destination = path + os.sep + timestampString + '.' + ext
+	if not os.path.exists(destination):
+		shutil.move(filepath, path + os.sep + timestampString + '.' + ext)
+		return destination
+	else:
+		print Fore.RED + 'file "' + destination + '" already exists!' + Style.RESET_ALL
+		return 0
+		
+	
 if (len(sys.argv) != 2 or not os.path.exists(sys.argv[1])):
 	print "parameter missing!"
 	print "this script takes one path to a folder with JPGs as command line parameter"
@@ -125,12 +140,13 @@ for file in getJpgFiles(path):
 		if (datetimeExif == datetimeFileCreated):
 			print "case 3: EXIF Photo.DateTimeOriginal and file creation date match"
 			print "correcting filename timestamp..."
-			print Fore.YELLOW + "--TODO--" + Style.RESET_ALL
+			renameFileDatetime(file, datetimeExif)
 		else:
 			print "case 4: EXIF Photo.DateTimeOriginal found"
-			print "correcting filename timestamp..."
 			print "correcting file creation date..."
-			print Fore.YELLOW + "--TODO--" + Style.RESET_ALL
+			setDatetimeFileCMA(file, datetimeExif)
+			print "correcting filename timestamp..."
+			renameFileDatetime(file, datetimeExif)
 	elif (not datetimeExif and datetimeFilename):
 		print "--> elected:\t" + str(datetimeFilename)
 		if (datetimeFilename == datetimeFileCreated):
@@ -141,6 +157,7 @@ for file in getJpgFiles(path):
 			print "case 6: filename timestamp found"
 			print "correction EXIF Photo.DateTimeOriginal..."
 			print "correcting file creation date..."
+			#setDatetimeFileCMA(file, datetimeExif)
 			print Fore.YELLOW + "--TODO--" + Style.RESET_ALL
 	
 	else:

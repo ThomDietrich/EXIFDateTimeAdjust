@@ -107,7 +107,8 @@ for file in getJpgFiles(path):
 	
 	if (datetimeExif and datetimeFilename):
 		print "--> elected:\t" + str(datetimeExif)
-		if (datetimeExif == datetimeFilename):
+		#if (datetimeExif == datetimeFilename): #...because we are not in a perfect world
+		if ((datetimeFilename - timedelta(seconds=2)) < datetimeExif < (datetimeFilename + timedelta(seconds=2))):
 			if (datetimeExif == datetimeFileCreated):
 				#print "case 0: EXIF Photo.DateTimeOriginal, filename timestamp and file creation date match"
 				print Fore.GREEN + "nothing to do here." + Style.RESET_ALL

@@ -139,12 +139,11 @@ for file in getJpgFiles(path):
 	print "EXIF:\t\t" + str(datetimeExif)
 	print "FileCreate:\t" + str(datetimeFileCreated)
 	print "Filename:\t" + str(datetimeFilename)
-	print "continue?", raw_input()
 	
 	if (datetimeExif and datetimeFilename):
 		print "--> elected:\t" + str(datetimeExif)
 		#if (datetimeExif == datetimeFilename): #...because we are not in a perfect world
-		if ((datetimeFilename - timedelta(seconds=2)) < datetimeExif < (datetimeFilename + timedelta(seconds=2))):
+		if ((datetimeFilename - timedelta(seconds=30)) < datetimeExif < (datetimeFilename + timedelta(seconds=30))):
 			if (datetimeExif == datetimeFileCreated):
 				#print "case 0: EXIF Photo.DateTimeOriginal, filename timestamp and file creation date match"
 				print Fore.GREEN + "nothing to do here." + Style.RESET_ALL
@@ -155,33 +154,39 @@ for file in getJpgFiles(path):
 		else:
 			print "case 2: EXIF Photo.DateTimeOriginal and filename timestamp are different"
 			print Fore.RED + "manual correction needed!" + Style.RESET_ALL
+			print "continue?", raw_input()
 	elif (datetimeExif and not datetimeFilename):
 		print "--> elected:\t" + str(datetimeExif)
 		if (datetimeExif == datetimeFileCreated):
 			print "case 3: EXIF Photo.DateTimeOriginal and file creation date match"
 			print Fore.CYAN + "correcting filename timestamp..." + Style.RESET_ALL
+			print "continue?", raw_input()
 			renameFilenameDatetime(file, datetimeExif)
 		else:
 			print "case 4: EXIF Photo.DateTimeOriginal found"
 			print Fore.CYAN + "correcting file creation date..." + Style.RESET_ALL
-			setDatetimeFileCMA(file, datetimeExif)
 			print Fore.CYAN + "correcting filename timestamp..." + Style.RESET_ALL
+			print "continue?", raw_input()
+			setDatetimeFileCMA(file, datetimeExif)
 			renameFilenameDatetime(file, datetimeExif)
 	elif (not datetimeExif and datetimeFilename):
 		print "--> elected:\t" + str(datetimeFilename)
 		if (datetimeFilename == datetimeFileCreated):
 			print "case 5: filename timestamp and file creation date match"
 			print Fore.CYAN + "correction EXIF Photo.DateTimeOriginal..." + Style.RESET_ALL
+			print "continue?", raw_input()
 			setDatetimeExif(file, datetimeFilename)
 		else:
 			print "case 6: filename timestamp found"
 			print Fore.CYAN + "correction EXIF Photo.DateTimeOriginal..." + Style.RESET_ALL
-			setDatetimeExif(file, datetimeFilename)
 			print Fore.CYAN + "correcting file creation date..." + Style.RESET_ALL
+			print "continue?", raw_input()
+			setDatetimeExif(file, datetimeFilename)
 			setDatetimeFileCMA(file, datetimeFilename)
 	else:
 		print Fore.RED + "no clue... try yourself" + Style.RESET_ALL
 		print "(go set the filename, than tickle me again)"
+		print "continue?", raw_input()
 
 
 

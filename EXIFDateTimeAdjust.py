@@ -129,7 +129,7 @@ def renameFilenameDatetime(filepath, timestamp):
 
 
 
-for file in getJpgFiles(path):
+for file in reversed(getJpgFiles(path)):
 	print Style.BRIGHT + "\n" + "-"*50 + Style.RESET_ALL
 	print file
 	

@@ -143,7 +143,7 @@ for file in reversed(getJpgFiles(path)):
 	if (datetimeExif and datetimeFilename):
 		print "--> elected:\t" + str(datetimeExif)
 		#if (datetimeExif == datetimeFilename): #...because we are not in a perfect world
-		if ((datetimeFilename - timedelta(seconds=30)) < datetimeExif < (datetimeFilename + timedelta(seconds=30))):
+		if ((datetimeFilename - timedelta(seconds=300)) < datetimeExif < (datetimeFilename + timedelta(seconds=300))):
 			if (datetimeExif == datetimeFileCreated):
 				#print "case 0: EXIF Photo.DateTimeOriginal, filename timestamp and file creation date match"
 				print Fore.GREEN + "nothing to do here." + Style.RESET_ALL
@@ -173,12 +173,12 @@ for file in reversed(getJpgFiles(path)):
 		print "--> elected:\t" + str(datetimeFilename)
 		if (datetimeFilename == datetimeFileCreated):
 			print "case 5: filename timestamp and file creation date match"
-			print Fore.CYAN + "correction EXIF Photo.DateTimeOriginal..." + Style.RESET_ALL
+			print Fore.CYAN + "correcting EXIF Photo.DateTimeOriginal..." + Style.RESET_ALL
 			print "continue?", raw_input()
 			setDatetimeExif(file, datetimeFilename)
 		else:
 			print "case 6: filename timestamp found"
-			print Fore.CYAN + "correction EXIF Photo.DateTimeOriginal..." + Style.RESET_ALL
+			print Fore.CYAN + "correcting EXIF Photo.DateTimeOriginal..." + Style.RESET_ALL
 			print Fore.CYAN + "correcting file creation date..." + Style.RESET_ALL
 			print "continue?", raw_input()
 			setDatetimeExif(file, datetimeFilename)

@@ -52,8 +52,13 @@ def getDatetimeExif(filepath):
 	metadata.read()
 	#print metadata.exif_keys
 	try:
-		tag = metadata['Exif.Photo.DateTimeOriginal']
-		return tag.value 
+		timestamp = metadata['Exif.Photo.DateTimeOriginal'].value
+		# fix 24h bug (2015-01-01 24:01:01)
+		if isinstance(timestamp, basestring):
+			if (timestamp[11:13] == "24"):
+				timestamp = timestamp[:11] + "00" + timestamp[13:]
+			timestamp = datetime.strptime(timestamp, "%Y:%m:%d %H:%M:%S")
+		return timestamp 
 	except KeyError as e:
 		#print "Error (Exif.Photo.DateTimeOriginal) " + str(e)
 		return 0
@@ -189,7 +194,7 @@ for file in reversed(getJpgFiles(path)):
 			print "case 4: EXIF Photo.DateTimeOriginal found"
 			print Fore.CYAN + "correcting file creation date..." + Style.RESET_ALL
 			print Fore.CYAN + "correcting filename timestamp..." + Style.RESET_ALL
-			print "continue?", raw_input()
+			#print "continue?", raw_input()
 			setDatetimeFileCMA(file, datetimeExif)
 			renameFilenameDatetime(file, datetimeExif)
 	elif (not datetimeExif and datetimeFilename):
@@ -216,9 +221,9 @@ for file in reversed(getJpgFiles(path)):
 		renameFilenameDatetime(file, datetimeFilename1970)
 	elif (not datetimeExif and not datetimeFilename and datetimeFileCreated):
 		print "--> elected:\t" + str(datetimeFileCreated)
-		print "case 6: file created timestamp ONLY"
+		print "case 8: file created timestamp ONLY"
 		print Fore.RED + "only..." + Style.RESET_ALL
-		#print "continue?", raw_input()
+		print "continue?", raw_input()
 		#setDatetimeExif(file, datetimeFileCreated)
 		#renameFilenameDatetime(file, datetimeFileCreated)
 	else:

@@ -129,7 +129,7 @@ def getDatetimeFilename1970(filepath):
 	return t
 	
 
-def renameFilenameDatetime(filepath, timestamp):
+def renameFileDatetime(filepath, timestamp):
 	timestampString = timestamp.strftime("%Y-%m-%d_%H.%M.%S")
 	path = os.path.dirname(filepath)
 	filename = os.path.splitext(os.path.basename(filepath))[0]
@@ -147,8 +147,14 @@ def renameFilenameDatetime(filepath, timestamp):
 		shutil.move(filepath, destination2)
 		return destination2
 	else:
-		print Fore.RED + 'file "' + destination + '" already exists!' + Style.RESET_ALL
-		return 0
+		for i in range(1, 100):
+			destination = path + os.sep + timestampString + "_" + str(i).zfill(2) + '.' + ext
+			if not os.path.exists(destination):
+				shutil.move(filepath, destination)
+				return destination
+		else:
+			print Fore.RED + 'file "' + filepath + '" could not be renamed!' + Style.RESET_ALL
+			return 0
 
 
 
@@ -189,14 +195,14 @@ for file in reversed(getJpgFiles(path)):
 			print "case 3: EXIF Photo.DateTimeOriginal and file creation date match"
 			print Fore.CYAN + "correcting filename timestamp..." + Style.RESET_ALL
 			print "continue?", raw_input()
-			renameFilenameDatetime(file, datetimeExif)
+			renameFileDatetime(file, datetimeExif)
 		else:
 			print "case 4: EXIF Photo.DateTimeOriginal found"
 			print Fore.CYAN + "correcting file creation date..." + Style.RESET_ALL
 			print Fore.CYAN + "correcting filename timestamp..." + Style.RESET_ALL
 			#print "continue?", raw_input()
 			setDatetimeFileCMA(file, datetimeExif)
-			renameFilenameDatetime(file, datetimeExif)
+			renameFileDatetime(file, datetimeExif)
 	elif (not datetimeExif and datetimeFilename):
 		print "--> elected:\t" + str(datetimeFilename)
 		if (datetimeFilename == datetimeFileCreated):

@@ -98,6 +98,15 @@ def setDatetimeFileCMA(filepath, timestamp):
     handle.close()
 
 
+def checkCorrectFilename(filepath):
+    filename = os.path.splitext(os.path.basename(filepath))[0].lower()
+    try:
+        # 2014-01-01_00.33.46[_01](.jpg)
+        t = datetime.strptime(filename[0:19], "%Y-%m-%d_%H.%M.%S")
+    except ValueError:
+        return False
+    return True
+
 
 def getDatetimeFilename(filepath):
     filename = os.path.splitext(os.path.basename(filepath))[0].lower()
@@ -132,27 +141,22 @@ def renameFileDatetime(filepath, timestamp):
     filename = os.path.splitext(os.path.basename(filepath))[0]
     ext = os.path.splitext(os.path.basename(filepath))[1][1:].strip().lower()
     destination = path + os.sep + timestampString + '.' + ext
-    if filepath == destination:
-        print Fore.YELLOW + 'no rename needed.' + Style.RESET_ALL
-        return 0
     if not os.path.exists(destination):
         shutil.move(filepath, destination)
-        return destination
     else:
         for i in range(1, 100):
             destination = path + os.sep + timestampString + "_" + str(i).zfill(2) + '.' + ext
             if not os.path.exists(destination):
                 shutil.move(filepath, destination)
-                print Fore.YELLOW + 'renamed to "' + destination + '"' + Style.RESET_ALL
-                return destination
                 break
         else:
             print Fore.RED + 'file "' + filepath + '" could not be renamed!' + Style.RESET_ALL
             return 0
-
+    print Fore.YELLOW + 'renamed to "' + destination + '"' + Style.RESET_ALL
+    return destination
 
 for imageFile in reversed(getJpgFiles(path)):
-    print Style.BRIGHT + "\n" + "-"*50 + Style.RESET_ALL
+    print Style.DIM + "\n" + "-"*50 + Style.RESET_ALL
     print imageFile
 
     datetimeExif = getDatetimeExif(imageFile)
@@ -165,25 +169,28 @@ for imageFile in reversed(getJpgFiles(path)):
     print "Filename1970:\t" + str(datetimeFilename1970)
 
     if datetimeExif and datetimeFilename:
-        print "--> elected:\t" + str(datetimeExif)
+        print Style.BRIGHT + "--> elected:\t" + str(datetimeExif) + Style.RESET_ALL
         #if datetimeExif == datetimeFilename: #...because we are not in a perfect world
         if (datetimeFilename - timedelta(seconds=300)) < datetimeExif < (datetimeFilename + timedelta(seconds=300)):
             if datetimeExif == datetimeFileCreated:
                 #print "case 0: EXIF Photo.DateTimeOriginal, filename timestamp and file creation date match"
-                print Fore.GREEN + "nothing to do here." + Style.RESET_ALL
-                renameFileDatetime(imageFile, datetimeExif)
+                if checkCorrectFilename(imageFile):
+                    print Fore.GREEN + "nothing to do here." + Style.RESET_ALL
+                else:
+                    renameFileDatetime(imageFile, datetimeExif)
                 #TODO differentiate between detected and correct timestamp
             else:
                 print "case 1: EXIF Photo.DateTimeOriginal and filename timestamp match"
                 print Fore.CYAN + "correcting file creation date and filename..." + Style.RESET_ALL
                 setDatetimeFileCMA(imageFile, datetimeExif)
-                renameFileDatetime(imageFile, datetimeExif)
+                if not checkCorrectFilename(imageFile):
+                    renameFileDatetime(imageFile, datetimeExif)
         else:
             print "case 2: EXIF Photo.DateTimeOriginal and filename timestamp are different"
             print Fore.RED + "manual correction needed!" + Style.RESET_ALL
             print "continue?", raw_input()
     elif datetimeExif and not datetimeFilename:
-        print "--> elected:\t" + str(datetimeExif)
+        print Style.BRIGHT + "--> elected:\t" + str(datetimeExif) + Style.RESET_ALL
         if datetimeExif == datetimeFileCreated:
             print "case 3: EXIF Photo.DateTimeOriginal and file creation date match"
             print Fore.CYAN + "correcting filename timestamp..." + Style.RESET_ALL
@@ -197,7 +204,7 @@ for imageFile in reversed(getJpgFiles(path)):
             setDatetimeFileCMA(imageFile, datetimeExif)
             renameFileDatetime(imageFile, datetimeExif)
     elif not datetimeExif and datetimeFilename:
-        print "--> elected:\t" + str(datetimeFilename)
+        print Style.BRIGHT + "--> elected:\t" + str(datetimeFilename) + Style.RESET_ALL
         if datetimeFilename == datetimeFileCreated:
             print "case 5: filename timestamp and file creation date match"
             print Fore.CYAN + "correcting EXIF Photo.DateTimeOriginal..." + Style.RESET_ALL
@@ -211,7 +218,7 @@ for imageFile in reversed(getJpgFiles(path)):
             setDatetimeExif(imageFile, datetimeFilename)
             setDatetimeFileCMA(imageFile, datetimeFilename)
     elif not datetimeExif and not datetimeFilename and datetimeFilename1970:
-        print "--> elected:\t" + str(datetimeFilename1970)
+        print Style.BRIGHT + "--> elected:\t" + str(datetimeFilename1970) + Style.RESET_ALL
         print "case 7"
         print Fore.RED + "only..." + Style.RESET_ALL
         print "continue?", raw_input()
@@ -221,10 +228,8 @@ for imageFile in reversed(getJpgFiles(path)):
     elif not datetimeExif and not datetimeFilename and datetimeFileCreated:
         print "--> elected:\t" + str(datetimeFileCreated)
         print "case 8: file created timestamp ONLY"
-        print Fore.RED + "only..." + Style.RESET_ALL
+        print Fore.RED + "manual correction needed!" + Style.RESET_ALL
         print "continue?", raw_input()
-        #setDatetimeExif(imageFile, datetimeFileCreated)
-        #renameFileDatetime(imageFile, datetimeFileCreated)
     else:
         print Fore.RED + "no clue... try yourself" + Style.RESET_ALL
         print "(go set the filename, than tickle me again)"
